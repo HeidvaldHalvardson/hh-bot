@@ -2,17 +2,16 @@
   "name": "tg-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "build": "ncc build src/index.js -o public -m"
+    "dev": "nodemon index.js",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "telegraf": "^4.16.3"
-  },
-  "devDependencies": {
-    "@vercel/ncc": "^0.38.2"
+    "node-telegram-bot-api": "^0.66.0",
+    "nodemon": "^3.1.7"
   }
 }

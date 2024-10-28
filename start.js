@@ -1,24 +1,27 @@
-const {gameOptions, againOptions} = require("./options");
+const TelegramApi = require('node-telegram-bot-api');
+const { gameOptions, againOptions } = require('./options')
+
+const token = '8051342874:AAFJI6SZT8hqu1hoMChjdg5Sk6ZUDpNKKuQ'
+
+const bot = new TelegramApi(token, {polling: true});
+
 const chats = {}
 
-const startGame = async (bot, chatId) => {
+const startGame = async (chatId) => {
   await bot.sendMessage(chatId, 'Сейчас я загадаю цифру от 0 до 9, а ты должен ее угадать!')
   const rndNum = Math.floor(Math.random() * 10);
   chats[chatId] = rndNum
   await bot.sendMessage(chatId, 'Отгадывай', gameOptions)
 }
-
-export const start = (bot) => {
+const start = () => {
   bot.setMyCommands([
     {command: '/start', description: 'Приветствие'},
     {command: '/info', description: 'Информация о пользователе'},
     {command: '/game', description: 'Игра: угадай цифру'}
   ])
-
   bot.on('message', async message => {
     const text = message.text;
     const chatId = message.chat.id;
-
     if (text === '/start') {
       if (message.from.username === 'yana_avtkhva') {
         await bot.sendAnimation(chatId, 'CgACAgQAAxkBAAMkZx95BeecrK3NWua1zRVjq5mCcxMAAhEDAALxfQRTKsNFLE2pbyg2BA')
@@ -28,26 +31,20 @@ export const start = (bot) => {
         return bot.sendMessage(chatId, `Добро пожаловать в телеграмм бот разработчика Heidvald Halvardson`);
       }
     }
-
     if (text === '/info') {
       return bot.sendMessage(chatId, `Тебя зовут ${message.chat.first_name} ${message.chat.last_name}`);
     }
-
     if (text === '/game') {
       return  startGame(chatId)
     }
-
     return bot.sendMessage(chatId, 'Я тебя не понимаю, попробуй ещё раз!)')
   })
-
   bot.on('callback_query', async message => {
     const data = message.data;
     const chatId = message.message.chat.id;
-
     if (data === '/again') {
       return  startGame(chatId)
     }
-
     if (+data === chats[chatId]) {
       return await bot.sendMessage(chatId, `Поздравляю, ты угадал цифру ${chats[chatId]}`, againOptions)
     } else {
@@ -55,3 +52,4 @@ export const start = (bot) => {
     }
   })
 }
+start()
