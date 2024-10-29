@@ -4,13 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "build": "ncc build src/index.js -o public -m"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@grammyjs/hydrate": "^1.4.1",
+    "@vercel/ncc": "^0.38.2",
     "dotenv": "^16.4.5",
     "grammy": "^1.30.0",
     "nodemon": "^3.1.7"

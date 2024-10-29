@@ -1,18 +1,16 @@
-require('dotenv').config()
-const {start} = require("../api/start");
-const {Bot} = require("grammy");
+import { Bot } from "grammy";
 
-const BOT_TOKEN = process.env.BOT_TOKEN || ''
+const token = process.env.BOT_TOKEN;
+if (!token) throw new Error("BOT_TOKEN is unset");
 
-const bot = new Bot(BOT_TOKEN)
+const bot = new Bot(token);
 
-const port = 8000;
-const app = express();
+bot.command(
+  "start",
+  (ctx) => ctx.reply("I'm running on Fly using long polling!"),
+);
 
-app.use(express.json());
-app.use(`/${BOT_TOKEN}`, webhookCallback(bot, "express"));
-app.use((_req, res) => res.status(200).send());
+process.once("SIGINT", () => bot.stop());
+process.once("SIGTERM", () => bot.stop());
 
-app.listen(port, () => console.log(`listening on port ${port}`));
-
-bot.on('start', () => start(bot))
+bot.start();

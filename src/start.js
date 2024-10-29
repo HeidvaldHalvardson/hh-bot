@@ -61,5 +61,4 @@ export const start = (bot) => {
     }
   })
 
-  bot.start()
 }
