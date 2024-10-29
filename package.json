@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "build": "ncc build src/index.js -o public -m"
+    "build": "ncc build index.js -o public -m"
   },
   "keywords": [],
   "author": "",
