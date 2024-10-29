@@ -1,55 +1,66 @@
-const TelegramApi = require('node-telegram-bot-api');
-const { gameOptions, againOptions } = require('./options')
+require('dotenv').config()
+const { Bot, GrammyError, HttpError, Keyboard, InlineKeyboard } = require('grammy')
+const { hydrate } = require('@grammyjs/hydrate')
 
-const token = '8051342874:AAFJI6SZT8hqu1hoMChjdg5Sk6ZUDpNKKuQ'
+const bot = new Bot(process.env.BOT_API_KEY)
 
-const bot = new TelegramApi(token, {polling: true});
+bot.use(hydrate())
 
-const chats = {}
+bot.api.setMyCommands([
+  {command: '/start', description: 'Запуск бота'},
+  {command: '/menu', description: 'Меню'},
+])
 
-const startGame = async (chatId) => {
-  await bot.sendMessage(chatId, 'Сейчас я загадаю цифру от 0 до 9, а ты должен ее угадать!')
-  const rndNum = Math.floor(Math.random() * 10);
-  chats[chatId] = rndNum
-  await bot.sendMessage(chatId, 'Отгадывай', gameOptions)
-}
-const start = () => {
-  bot.setMyCommands([
-    {command: '/start', description: 'Приветствие'},
-    {command: '/info', description: 'Информация о пользователе'},
-    {command: '/game', description: 'Игра: угадай цифру'}
-  ])
-  bot.on('message', async message => {
-    const text = message.text;
-    const chatId = message.chat.id;
-    if (text === '/start') {
-      if (message.from.username === 'yana_avtkhva') {
-        await bot.sendAnimation(chatId, 'CgACAgQAAxkBAAMkZx95BeecrK3NWua1zRVjq5mCcxMAAhEDAALxfQRTKsNFLE2pbyg2BA')
-        return bot.sendMessage(chatId, `Мы ждём тебя дома ${message.chat.first_name}`);
-      } else {
-        await bot.sendSticker(chatId, 'https://tlgrm.ru/_/stickers/ea5/382/ea53826d-c192-376a-b766-e5abc535f1c9/2.webp')
-        return bot.sendMessage(chatId, `Добро пожаловать в телеграмм бот разработчика Heidvald Halvardson`);
-      }
-    }
-    if (text === '/info') {
-      return bot.sendMessage(chatId, `Тебя зовут ${message.chat.first_name} ${message.chat.last_name}`);
-    }
-    if (text === '/game') {
-      return  startGame(chatId)
-    }
-    return bot.sendMessage(chatId, 'Я тебя не понимаю, попробуй ещё раз!)')
+bot.command('start', async (ctx) => {
+  await ctx.reply('Привет! Я Бот.')
+})
+
+const menuBoard = new InlineKeyboard()
+  .text('Узнать статус заказа', 'order-status')
+  .text('Поддержка', 'support')
+
+const backKeyboard = new InlineKeyboard()
+  .text('< Назад в меню', 'back')
+
+bot.command('menu', async (ctx) => {
+  await ctx.reply('Выберите пункт меню', {
+    reply_markup: menuBoard
   })
-  bot.on('callback_query', async message => {
-    const data = message.data;
-    const chatId = message.message.chat.id;
-    if (data === '/again') {
-      return  startGame(chatId)
-    }
-    if (+data === chats[chatId]) {
-      return await bot.sendMessage(chatId, `Поздравляю, ты угадал цифру ${chats[chatId]}`, againOptions)
-    } else {
-      return await bot.sendMessage(chatId, `К сожалению ты не угадал, бот загадал ${chats[chatId]}`, againOptions)
-    }
+})
+
+bot.callbackQuery('order-status', async (ctx) => {
+  await ctx.callbackQuery.message.editText('Статус заказа: в пути', {
+    reply_markup: backKeyboard
   })
-}
-start()
+  await ctx.answerCallbackQuery()
+})
+
+bot.callbackQuery('support', async (ctx) => {
+  await ctx.callbackQuery.message.editText('Напишите ваш запрос', {
+    reply_markup: backKeyboard
+  })
+  await ctx.answerCallbackQuery()
+})
+
+bot.callbackQuery('back', async (ctx) => {
+  await ctx.callbackQuery.message.editText('Выберите пункт меню', {
+    reply_markup: menuBoard
+  })
+  await ctx.answerCallbackQuery()
+})
+
+bot.catch((err) => {
+  const ctx = err.ctx
+  console.log(`Error while handling update ${ctx.update.update_id}`)
+  const e = err.error
+
+  if (e instanceof GrammyError) {
+    console.error('Error in request:', e.description)
+  } else if (e instanceof HttpError) {
+    console.error('Could not contact Telegram', e)
+  } else {
+    console.error('Unknown error:', e)
+  }
+})
+
+bot.start()
