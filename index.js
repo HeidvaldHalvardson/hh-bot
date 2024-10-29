@@ -1,66 +1,18 @@
 require('dotenv').config()
-const { Bot, GrammyError, HttpError, Keyboard, InlineKeyboard } = require('grammy')
-const { hydrate } = require('@grammyjs/hydrate')
+const {start} = require("../api/start");
+const {Bot} = require("grammy");
 
-const bot = new Bot(process.env.BOT_API_KEY)
+const BOT_TOKEN = process.env.BOT_TOKEN || ''
 
-bot.use(hydrate())
+const bot = new Bot(BOT_TOKEN)
 
-bot.api.setMyCommands([
-  {command: '/start', description: 'Запуск бота'},
-  {command: '/menu', description: 'Меню'},
-])
+const port = 8000;
+const app = express();
 
-bot.command('start', async (ctx) => {
-  await ctx.reply('Привет! Я Бот.')
-})
+app.use(express.json());
+app.use(`/${BOT_TOKEN}`, webhookCallback(bot, "express"));
+app.use((_req, res) => res.status(200).send());
 
-const menuBoard = new InlineKeyboard()
-  .text('Узнать статус заказа', 'order-status')
-  .text('Поддержка', 'support')
+app.listen(port, () => console.log(`listening on port ${port}`));
 
-const backKeyboard = new InlineKeyboard()
-  .text('< Назад в меню', 'back')
-
-bot.command('menu', async (ctx) => {
-  await ctx.reply('Выберите пункт меню', {
-    reply_markup: menuBoard
-  })
-})
-
-bot.callbackQuery('order-status', async (ctx) => {
-  await ctx.callbackQuery.message.editText('Статус заказа: в пути', {
-    reply_markup: backKeyboard
-  })
-  await ctx.answerCallbackQuery()
-})
-
-bot.callbackQuery('support', async (ctx) => {
-  await ctx.callbackQuery.message.editText('Напишите ваш запрос', {
-    reply_markup: backKeyboard
-  })
-  await ctx.answerCallbackQuery()
-})
-
-bot.callbackQuery('back', async (ctx) => {
-  await ctx.callbackQuery.message.editText('Выберите пункт меню', {
-    reply_markup: menuBoard
-  })
-  await ctx.answerCallbackQuery()
-})
-
-bot.catch((err) => {
-  const ctx = err.ctx
-  console.log(`Error while handling update ${ctx.update.update_id}`)
-  const e = err.error
-
-  if (e instanceof GrammyError) {
-    console.error('Error in request:', e.description)
-  } else if (e instanceof HttpError) {
-    console.error('Could not contact Telegram', e)
-  } else {
-    console.error('Unknown error:', e)
-  }
-})
-
-bot.start()
+bot.on('start', () => start(bot))
